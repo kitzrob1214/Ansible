@@ -1,0 +1,48 @@
+---
+- name: Check system resources before and after reboot
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Gather disk usage information before reboot
+      command: df -h
+      register: disk_usage_before
+
+    - name: Gather memory information before reboot
+      command: free -m
+      register: memory_before
+
+    - name: Gather CPU information before reboot
+      command: lscpu
+      register: cpu_before
+
+    - name: Reboot the host
+      reboot:
+        reboot_timeout: 600
+
+    - name: Wait for host to be reachable after reboot
+      wait_for:
+        timeout: 300
+
+    - name: Gather disk usage information after reboot
+      command: df -h
+      register: disk_usage_after
+
+    - name: Gather memory information after reboot
+      command: free -m
+      register: memory_after
+
+    - name: Gather CPU information after reboot
+      command: lscpu
+      register: cpu_after
+
+    - name: Compare disk usage
+      debug:
+        msg: "Disk usage changed from {{ disk_usage_before.stdout }} to {{ disk_usage_after.stdout }}"
+
+    - name: Compare memory usage
+      debug:
+        msg: "Memory usage changed from {{ memory_before.stdout }} to {{ memory_after.stdout }}"
+
+    - name: Compare CPU information
+      debug:
+        msg: "CPU information is unchanged: {{ cpu_before.stdout }}"
